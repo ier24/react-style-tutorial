@@ -33,7 +33,7 @@ function ProductRow({ product }: ProductRowProps) {
   const name = product.stocked ? (
     product.name
   ) : (
-    <span style={{ color: "red" }}>{product.name}</span>
+    <span style={{ color: "red" }}>{product.name}: 品切れです!!</span>
   );
 
   return (
