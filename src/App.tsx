@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 type Product = {
   category: string;
   price: string;
@@ -15,6 +17,8 @@ type ProductRowProps = {
 
 type ProductTableProps = {
   products: Product[];
+  filterText: string;
+  inStockOnly: boolean;
 };
 
 type FilterableProductTableProps = {
@@ -44,11 +48,21 @@ function ProductRow({ product }: ProductRowProps) {
   );
 }
 
-function ProductTable({ products }: ProductTableProps) {
+function ProductTable({
+  products,
+  filterText,
+  inStockOnly,
+}: ProductTableProps) {
   const rows: JSX.Element[] = [];
   let lastCategory: string | null = null;
 
   products.forEach((product) => {
+    if (product.name.toLowerCase().indexOf(filterText.toLowerCase()) === -1) {
+      return;
+    }
+    if (inStockOnly && !product.stocked) {
+      return;
+    }
     if (product.category !== lastCategory) {
       rows.push(
         <ProductCategoryRow
@@ -74,22 +88,63 @@ function ProductTable({ products }: ProductTableProps) {
   );
 }
 
-function SearchBar() {
+function SearchBar({
+  filterText,
+  inStockOnly,
+  onFilterTextChange,
+  onInStockOnlyChange,
+}: {
+  filterText: string;
+  inStockOnly: boolean;
+  onFilterTextChange: (filterText: string) => void;
+  onInStockOnlyChange: (inStockOnly: boolean) => void;
+}) {
   return (
     <form>
-      <input type="text" placeholder="Search..." />
+      <input
+        type="text"
+        value={filterText}
+        placeholder="Search..."
+        /**
+         * 子→親へとデータを流す
+         */
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+          onFilterTextChange(e.target.value)
+        }
+      />
       <label>
-        <input type="checkbox" /> Only show products in stock
+        <input
+          type="checkbox"
+          checked={inStockOnly}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            onInStockOnlyChange(e.target.checked)
+          }
+        />{" "}
+        在庫がある商品のみ表示する
       </label>
     </form>
   );
 }
 
 function FilterableProductTable({ products }: FilterableProductTableProps) {
+  /**
+   * SearchBar と ProductTableの共通の親で、検索テキストやチェックボックスの値に基づきフィルタリングされた商品リストをレンダリングする
+   */
+  const [filterText, setFilterText] = useState("");
+  const [inStockOnly, setInStockOnly] = useState(false);
   return (
     <div>
-      <SearchBar />
-      <ProductTable products={products} />
+      <SearchBar
+        filterText={filterText}
+        inStockOnly={inStockOnly}
+        onFilterTextChange={setFilterText}
+        onInStockOnlyChange={setInStockOnly}
+      />
+      <ProductTable
+        products={products}
+        filterText={filterText}
+        inStockOnly={inStockOnly}
+      />
     </div>
   );
 }
